@@ -1,7 +1,7 @@
 import httpx
 import pytest
 
-from scc_loader import ConfigServerClient
+from libraries import ConfigServerClient
 
 
 def test_build_url_with_label():
