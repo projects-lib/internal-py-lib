@@ -1,4 +1,4 @@
-# libraries
+# internal-py-lib
 
 Internal Python library for XL-Axiata. Provides a Spring Cloud Config Server
 loader that fetches properties and returns them as a single flat `dict`, plus a
@@ -9,7 +9,7 @@ centralized logging setup.
 From Git (recommended for teams; pin to a version tag):
 
 ```
-libraries @ git+https://git-internal/xl-axiata/loader-scc-py.git@v0.1.0
+internal-py-lib @ git+https://git-internal/xl-axiata/loader-scc-py.git@v0.1.0
 ```
 
 Local (single-machine development):
@@ -25,7 +25,7 @@ application loads `.env` (e.g. with `python-dotenv`), then:
 
 ```python
 from dotenv import load_dotenv
-from libraries import ConfigServerClient
+from internal_py_lib import ConfigServerClient
 
 load_dotenv()                       # load .env into os.environ
 remote = ConfigServerClient().fetch()
@@ -69,7 +69,7 @@ Call it once at application startup, then obtain loggers anywhere via
 
 ```python
 from dotenv import load_dotenv
-from libraries import LoggingConfigurator, get_logger, ConfigServerClient
+from internal_py_lib import LoggingConfigurator, get_logger, ConfigServerClient
 
 load_dotenv()
 LoggingConfigurator().configure()   # reads LOG_* env vars
@@ -98,7 +98,7 @@ A thin `configure_logging` wrapper is kept for brevity and backwards
 compatibility; it delegates to the singleton:
 
 ```python
-from libraries import configure_logging
+from internal_py_lib import configure_logging
 configure_logging(level="DEBUG", fmt="json")     # == LoggingConfigurator(...).configure()
 ```
 

@@ -3,13 +3,13 @@ import logging
 
 import pytest
 
-from libraries import (
+from internal_py_lib import (
     JsonFormatter,
     LoggingConfigurator,
     configure_logging,
     get_logger,
 )
-from libraries.logging_config import _MANAGED_HANDLER_ATTR
+from internal_py_lib.logging_config import _MANAGED_HANDLER_ATTR
 
 
 @pytest.fixture(autouse=True)

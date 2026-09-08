@@ -1,7 +1,7 @@
-"""libraries - Spring Cloud Config Server loader & centralized logging for Python."""
+"""internal_py_lib - Spring Cloud Config Server loader & centralized logging for Python."""
 
-from libraries.config_server import ConfigServerClient
-from libraries.logging_config import (
+from internal_py_lib.config_server import ConfigServerClient
+from internal_py_lib.logging_config import (
     JsonFormatter,
     LoggingConfigurator,
     configure_logging,

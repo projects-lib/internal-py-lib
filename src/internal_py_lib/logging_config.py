@@ -19,7 +19,7 @@ Environment variables (all optional when the argument is provided):
 Typical usage in a consuming application::
 
     from dotenv import load_dotenv
-    from libraries import LoggingConfigurator, ConfigServerClient
+    from internal_py_lib import LoggingConfigurator, ConfigServerClient
 
     load_dotenv()
     LoggingConfigurator().configure()       # reads LOG_* env vars
@@ -55,7 +55,7 @@ _PLAIN_FMT = "%(asctime)s %(levelname)s %(name)s - %(message)s"
 
 # Marker attached to handlers created by this module so we can find and replace
 # them on subsequent calls instead of stacking duplicates.
-_MANAGED_HANDLER_ATTR = "_libraries_managed"
+_MANAGED_HANDLER_ATTR = "_internal_py_lib_managed"
 
 # Standard LogRecord attributes that should not be treated as "extra" fields
 # when serializing to JSON.
