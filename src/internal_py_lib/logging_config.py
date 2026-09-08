@@ -1,38 +1,3 @@
-"""Centralized logging configuration for Python applications.
-
-This module exposes :class:`LoggingConfigurator`, a singleton that configures
-the root logger for the whole application. Being a singleton means every part of
-the codebase shares one central logging configuration: constructing it again
-returns the same instance and reconfigures logging in place instead of creating
-a competing setup.
-
-It follows the same design conventions as the rest of the library: values are
-read from environment variables with sensible defaults, and every setting can be
-overridden via constructor arguments (dependency injection).
-
-Environment variables (all optional when the argument is provided):
-    LOG_LEVEL   -> logging level name ("DEBUG", "INFO", "WARNING", ...) or int
-    LOG_FORMAT  -> "plain" (default) or "json"
-    LOG_STREAM  -> "stdout" (default) or "stderr"
-    LOG_DATEFMT -> strftime pattern for timestamps
-
-Typical usage in a consuming application::
-
-    from dotenv import load_dotenv
-    from internal_py_lib import LoggingConfigurator, ConfigServerClient
-
-    load_dotenv()
-    LoggingConfigurator().configure()       # reads LOG_* env vars
-    remote = ConfigServerClient().fetch()
-
-Or, mirroring the ``ConfigServerClient`` style, pass settings directly::
-
-    LoggingConfigurator(level="DEBUG", fmt="json").configure()
-
-A thin :func:`configure_logging` wrapper is kept for brevity and backwards
-compatibility; it delegates to the singleton.
-"""
-
 import json
 import logging
 import os
@@ -65,13 +30,6 @@ _RESERVED_RECORD_ATTRS = frozenset(
 
 
 class JsonFormatter(logging.Formatter):
-    """Format log records as single-line JSON objects.
-
-    Any custom fields passed through ``logging``'s ``extra=`` argument are
-    included as top-level keys, which makes the output friendly to log
-    aggregators (e.g. ELK, Loki, CloudWatch).
-    """
-
     def __init__(self, datefmt: Optional[str] = None):
         super().__init__(datefmt=datefmt)
 
@@ -96,7 +54,7 @@ class JsonFormatter(logging.Formatter):
 
 
 def _resolve_level(level: Union[str, int, None]) -> int:
-    """Coerce a level name or number into a numeric logging level."""
+    # Coerce a level name or number into a numeric logging level.
     if level is None:
         level = os.getenv("LOG_LEVEL", DEFAULT_LEVEL)
     if isinstance(level, int):
@@ -129,24 +87,7 @@ def _build_formatter(fmt: Optional[str], datefmt: str) -> logging.Formatter:
 
 
 class LoggingConfigurator:
-    """Singleton that centralizes root-logger configuration.
-
-    Only one instance ever exists per process. Instantiating the class again
-    returns the same object, so the whole application shares a single logging
-    configuration. Passing new arguments on a later call updates the stored
-    settings; call :meth:`configure` to (re)apply them to the root logger.
-
-    Args:
-        level: Log level name/number. Falls back to ``LOG_LEVEL`` env var, then
-            ``"INFO"``.
-        fmt: ``"plain"`` or ``"json"``. Falls back to ``LOG_FORMAT`` env var,
-            then ``"plain"``.
-        stream: ``"stdout"`` or ``"stderr"``. Falls back to ``LOG_STREAM`` env
-            var, then ``"stdout"``.
-        datefmt: strftime pattern for timestamps. Falls back to ``LOG_DATEFMT``
-            env var, then an ISO-8601-like default.
-    """
-
+    # Singleton that centralizes root-logger configuration.
     _instance: Optional["LoggingConfigurator"] = None
     _lock = threading.Lock()
 
@@ -170,10 +111,7 @@ class LoggingConfigurator:
         stream: Optional[str] = None,
         datefmt: Optional[str] = None,
     ):
-        # __init__ runs on every construction even though __new__ returns the
-        # same object. On the first call we record all settings; on later calls
-        # we only override settings that were explicitly provided, so the shared
-        # configuration is updated without being reset by defaults.
+
         if not getattr(self, "_initialized", False):
             self.level = level
             self.fmt = fmt
@@ -191,11 +129,6 @@ class LoggingConfigurator:
                 self.datefmt = datefmt
 
     def configure(self) -> logging.Logger:
-        """Apply the current settings to the root logger and return it.
-
-        Idempotent: an existing handler installed by this class is replaced
-        rather than duplicated, so it is safe to call at every entry point.
-        """
         resolved_level = _resolve_level(self.level)
         resolved_datefmt = self.datefmt or os.getenv("LOG_DATEFMT", DEFAULT_DATEFMT)
         formatter = _build_formatter(self.fmt, resolved_datefmt)
@@ -204,8 +137,6 @@ class LoggingConfigurator:
         root = logging.getLogger()
         root.setLevel(resolved_level)
 
-        # Remove any handler we previously installed so repeated calls do not
-        # stack.
         for handler in list(root.handlers):
             if getattr(handler, _MANAGED_HANDLER_ATTR, False):
                 root.removeHandler(handler)
@@ -221,16 +152,10 @@ class LoggingConfigurator:
 
     @classmethod
     def instance(cls) -> Optional["LoggingConfigurator"]:
-        """Return the existing singleton instance, or ``None`` if unset."""
         return cls._instance
 
     @classmethod
     def reset(cls) -> None:
-        """Discard the singleton instance.
-
-        Primarily useful for tests that need a clean slate. This does not touch
-        handlers already installed on the root logger.
-        """
         with cls._lock:
             cls._instance = None
 
@@ -241,20 +166,10 @@ def configure_logging(
     stream: Optional[str] = None,
     datefmt: Optional[str] = None,
 ) -> logging.Logger:
-    """Configure the root logger via the :class:`LoggingConfigurator` singleton.
-
-    Thin wrapper kept for brevity and backwards compatibility. Equivalent to
-    ``LoggingConfigurator(...).configure()``.
-    """
     return LoggingConfigurator(
         level=level, fmt=fmt, stream=stream, datefmt=datefmt
     ).configure()
 
 
 def get_logger(name: Optional[str] = None) -> logging.Logger:
-    """Return a named logger.
-
-    Thin convenience wrapper over :func:`logging.getLogger` so applications can
-    obtain loggers through a single import from this library.
-    """
     return logging.getLogger(name)

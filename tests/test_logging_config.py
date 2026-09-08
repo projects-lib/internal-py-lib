@@ -14,7 +14,6 @@ from internal_py_lib.logging_config import _MANAGED_HANDLER_ATTR
 
 @pytest.fixture(autouse=True)
 def _reset_root_logger():
-    """Snapshot and restore the root logger, and reset the singleton, per test."""
     root = logging.getLogger()
     saved_handlers = root.handlers[:]
     saved_level = root.level

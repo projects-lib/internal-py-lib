@@ -1,22 +1,3 @@
-"""Spring Cloud Config Server client for Python applications.
-
-Configuration is read from environment variables (`os.environ`). The client does
-not infer the `.env` location from `__file__`. The consuming application is
-responsible for loading `.env` (e.g. via `load_dotenv()`) or injecting values
-through constructor arguments.
-
-Environment variables (all optional when the argument is provided):
-    SPRING_CLOUD_CONFIG_URI             -> Config Server URI
-    APPLICATION_NAME                    -> application name (URL segment 2)
-    SPRING_CLOUD_CONFIG_PROFILE         -> profile (URL segment 3)
-    LABEL                               -> label (URL segment 4, optional)
-    SPRING_CLOUD_CONFIG_FAIL_FAST       -> "true"/"false"
-    SPRING_CLOUD_CONFIG_REQUEST_TIMEOUT -> timeout in seconds (float)
-
-REST endpoint called:
-    GET {uri}/{application}/{profile}[/{label}]
-"""
-
 import os
 import logging
 from typing import Any, Dict, Optional
@@ -62,12 +43,6 @@ class ConfigServerClient:
         return "/".join(parts)
 
     def fetch(self) -> Dict[str, Any]:
-        """Fetch and merge properties from Config Server. Returns a flat map.
-
-        On failure:
-          - fail_fast=True  -> raise RuntimeError (stop application at startup)
-          - fail_fast=False -> return {} (continue with defaults)
-        """
         url = self._build_url()
         try:
             with httpx.Client(timeout=self.timeout) as client:
@@ -85,12 +60,6 @@ class ConfigServerClient:
 
     @staticmethod
     def _merge_property_sources(payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Merge property sources into a single flat map.
-
-        The first element has the highest priority. The map is populated from the
-        lowest-priority element first and then overwritten by higher-priority ones
-        (reverse iteration), so the earliest element wins on duplicate keys.
-        """
         merged: Dict[str, Any] = {}
         sources = payload.get("propertySources", []) or []
         for source in reversed(sources):
